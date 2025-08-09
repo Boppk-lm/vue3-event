@@ -11,15 +11,18 @@
             <el-input v-model="form.username" placeholder="请输入用户名" />
           </el-form-item>
           <el-form-item prop="password">
-            <el-input v-model="form.password" type="password" placeholder="请输入密码" />
+            <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="submitForm(ruleFormRef)" class="log-bth">
               登录
             </el-button>
+            <el-link type="info" underline="never" @click="$router.push('/register')">去注册</el-link>
           </el-form-item>
         </el-form>
-
+        <!-- <div class="reg">
+          <router-link to="/register">去注册</router-link>
+        </div> -->
       </div>
     </div>
   </div>
@@ -29,8 +32,9 @@
 import { reactive, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import router from '@/router'
-import {login} from '@/api/login'
+import { login } from '@/api/login'
 import { useTokenStore } from '@/stores/TokenStore'
+import { ElMessage } from 'element-plus'
 interface RuleForm {
   username: string
   password: string
@@ -60,16 +64,22 @@ const submitForm = async (formEl?: FormInstance): Promise<boolean> => {
     await formEl.validate() // 校验通过则继续
     const res = await login(form)
     // 在这里真正提交数据
-    if(res.data.code===0) {
+    if (res.data.code === 0) {
       const TOkenStore = useTokenStore()
       TOkenStore.setToken(res.data.token)
-      console.log(res.data.token);
-      formEl.resetFields() // 提交成功后再重置（通常建议等后端返回成功再 reset）
+      ElMessage({
+        message: res.data.message || '登录成功',
+        type: 'success',
+        duration:1000
+      })
+      formEl.resetFields() // 提交成功后再重置
       router.push('/')
+    } else {
+      ElMessage.error('用户名或密码错误')
     }
     return true
   } catch (err) {
-    console.log('error submit!', err)
+    console.error('error submit!', err)
     return false
   }
 }

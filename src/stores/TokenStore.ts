@@ -10,11 +10,9 @@ export const useTokenStore = defineStore('token', {
       this.token = token
       localStorage.setItem('token',token)
     },
-    loadToken() {
+    getToken() {
       const saveToken = localStorage.getItem('token')
-      if(saveToken) {
-        this.token =saveToken
-      }
+      return saveToken
     },
     clearToken() {
       this.token = ''
