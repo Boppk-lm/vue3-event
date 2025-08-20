@@ -28,26 +28,29 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   (response) => {
     const res = response
-    // 业务层判断
-    if (res.status === 401) {
-      // token 过期处理逻辑
-      const tokenStore = useTokenStore()
-      tokenStore.clearToken() // 清除token
-      ElMessage.error(res.data.message||'身份已过期，请重新登录')
-      // 跳转登录页，防止无限循环登录可以做判断
-      router.push('/login')
-      return Promise.reject(new Error('身份已过期，请重新登录'))
-    }
-    if (res.status !== 200) {
-      ElMessage.error(res.data.message||'请求错误')
+    if (res.data.code !== 0 && res.data.code) {
+      ElMessage.error(res.data.message || '出现错误')
       return Promise.reject(new Error(res.data.message || 'Error'))
     }
     return res
   },
   (error) => {
-    console.error('接口异常:', error)
+    // HTTP 非 2xx，处理 401
+    if (error.response) {
+      if (error.response.status === 401) {
+        const tokenStore = useTokenStore()
+        tokenStore.clearToken()
+        ElMessage.error('身份已过期，请重新登录')
+        router.push('/login')
+      } else {
+        // 其他 HTTP 错误
+        ElMessage.error(error.response.data?.message || `请求错误: ${error.response.status}`)
+      }
+    } else {
+      ElMessage.error(error.message || '接口请求失败')
+    }
     return Promise.reject(error)
-  },
+  }
 )
 
 export default service
